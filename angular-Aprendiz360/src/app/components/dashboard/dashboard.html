@@ -1,0 +1,77 @@
+<h1 class="page-title">Dashboard Informativo</h1>
+
+<div class="metrics-grid">
+  <div class="metric-card" routerLink="/aprendices">
+    <div class="metric-info">
+      <h3>Total Aprendices</h3>
+      <p>{{ totalAprendices }}</p>
+    </div>
+    <div class="metric-icon">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+    </div>
+  </div>
+
+  <div class="metric-card" routerLink="/fichas">
+    <div class="metric-info">
+      <h3>Total Fichas</h3>
+      <p>{{ totalFichas }}</p>
+    </div>
+    <div class="metric-icon">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>Consulta de Aprendices por Ficha</h2>
+  </div>
+
+  <div class="form-group">
+    <label>Selecciona una Ficha de Formación:</label>
+    <select [(ngModel)]="fichaSeleccionadaId" (change)="buscarPorFicha()">
+      <option [ngValue]="undefined">-- Seleccionar Ficha --</option>
+      <option *ngFor="let f of fichas" [value]="f.id">
+        Ficha {{ f.numeroFicha }} - {{ f.programa }}
+      </option>
+    </select>
+  </div>
+
+  <div class="table-container" *ngIf="aprendicesFiltrados.length > 0">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Nombre Aprendiz</th>
+          <th>Identificación</th>
+          <th>Edad</th>
+          <th>País de Origen</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let a of aprendicesFiltrados">
+          <td><b>{{ a.nombre }}</b></td>
+          <td>{{ a.numeroIdentificacion }}</td>
+          <td>{{ a.edad }} años</td>
+          <td>{{ a.paisOrigen || 'N/A' }}</td>
+          <td>
+            <span style="background-color: #E6F4EA; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.8rem;">
+              {{ a.estado }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p *ngIf="fichaSeleccionadaId && aprendicesFiltrados.length === 0" style="margin-top: 15px; color: var(--text-secondary); text-align: center; padding: 20px 0;">
+    No hay aprendices inscritos en esta ficha actualmente.
+  </p>
+</div>
