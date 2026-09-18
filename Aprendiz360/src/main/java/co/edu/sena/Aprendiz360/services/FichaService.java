@@ -50,6 +50,7 @@ public class FichaService {
                 .orElseThrow(() -> new RuntimeException("Ficha no encontrada con el número: " + numeroFicha));
 
         ficha.setPrograma(fichaDetalles.getPrograma());
+        ficha.setTipoFormacion(fichaDetalles.getTipoFormacion());
         ficha.setCuposDisponibles(fichaDetalles.getCuposDisponibles());
         ficha.setEstado(fichaDetalles.getEstado());
 
