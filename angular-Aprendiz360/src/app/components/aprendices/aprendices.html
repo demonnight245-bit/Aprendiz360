@@ -1,8 +1,10 @@
 <h1 class="page-title">Inscripción y Control de Aprendices</h1>
 
+<p *ngIf="mensajeError" style="color: #b42318; margin-bottom: 16px;">{{ mensajeError }}</p>
+
 <div class="card">
   <div class="card-header">
-    <h2>Registrar Nuevo Aprendiz</h2>
+    <h2>{{ editingAprendizId ? 'Editar Aprendiz' : 'Registrar Nuevo Aprendiz' }}</h2>
   </div>
   <form (ngSubmit)="guardarAprendiz()">
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
@@ -12,7 +14,8 @@
       </div>
       <div class="form-group">
         <label>Número de Identificación:</label>
-        <input type="text" [(ngModel)]="nuevoAprendiz.numeroIdentificacion" name="numeroIdentificacion" placeholder="Ej: 1012345678" required>
+        <input type="text" [(ngModel)]="nuevoAprendiz.numeroIdentificacion" name="numeroIdentificacion"
+          placeholder="Ej: 1012345678" required>
       </div>
       <div class="form-group">
         <label>Edad:</label>
@@ -25,33 +28,40 @@
           <option *ngFor="let p of paises" [value]="p">{{ p }}</option>
         </select>
       </div>
+      <div class="form-group">
+        <label>Estado:</label>
+        <select [(ngModel)]="nuevoAprendiz.estado" name="estadoAprendiz" required>
+          <option value="ACTIVO">Activo</option>
+          <option value="INACTIVO">Inactivo</option>
+        </select>
+      </div>
       <div class="form-group" style="grid-column: span 2;">
         <label>Ficha de Formación Activa:</label>
-        <select [(ngModel)]="fichaSeleccionadaId" name="ficha" required>
+        <select [(ngModel)]="fichaSeleccionadaId" name="ficha" required [disabled]="!!editingAprendizId">
           <option [ngValue]="undefined">-- Seleccionar Ficha --</option>
-          <option *ngFor="let f of fichasActivas" [value]="f.id">
-            Ficha {{ f.numeroFicha }} - {{ f.programa }} (Cupos disponibles: {{ f.cuposDisponibles - f.numeroAprendicesInscritos }})
+          <option *ngFor="let f of fichasActivas" [ngValue]="f.numeroFicha">
+            Ficha {{ f.numeroFicha }} - {{ f.programa }} (Cupos disponibles: {{ f.cuposDisponibles -
+            f.numeroAprendicesInscritos }})
           </option>
         </select>
       </div>
     </div>
     <button type="submit" class="btn-sena" style="margin-top: 10px;">
-      👨‍🎓 Inscribir Aprendiz
+      {{ editingAprendizId ? '💾 Actualizar Aprendiz' : '👨‍🎓 Inscribir Aprendiz' }}
     </button>
+    <button *ngIf="editingAprendizId" type="button" class="btn-secondary" (click)="cancelarEdicion()">Cancelar</button>
   </form>
 </div>
 
 <div class="card">
-  <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: none; margin-bottom: 0;">
+  <div class="card-header"
+    style="display: flex; justify-content: space-between; align-items: center; border-bottom: none; margin-bottom: 0;">
     <h2>Directorio General de Aprendices</h2>
   </div>
 
   <div class="form-group" style="margin-bottom: 20px;">
-    <input 
-      type="text" 
-      [(ngModel)]="textoBusqueda" 
-      placeholder="🔍 Buscar aprendiz por nombre o número de identificación..." 
-    />
+    <input type="text" [(ngModel)]="textoBusqueda"
+      placeholder="🔍 Buscar aprendiz por nombre o número de identificación..." />
   </div>
 
   <div class="table-container">
@@ -64,6 +74,7 @@
           <th>País</th>
           <th>Ficha</th>
           <th>Estado</th>
+          <th>Acción</th>
         </tr>
       </thead>
       <tbody>
@@ -73,14 +84,25 @@
           <td>{{ a.edad }} años</td>
           <td>{{ a.paisOrigen || 'N/A' }}</td>
           <td>
-            <span style="background-color: #F1F5F9; color: var(--sena-dark); padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;">
+            <span
+              style="background-color: #F1F5F9; color: var(--sena-dark); padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;">
               {{ a.ficha?.numeroFicha || 'Sin Ficha' }}
             </span>
           </td>
           <td>
-            <span style="background-color: #E6F4EA; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.8rem;">
+            <span
+              style="background-color: #E6F4EA; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.8rem;">
               {{ a.estado }}
             </span>
+          </td>
+          <td>
+            <button type="button" class="btn-table" (click)="editarAprendiz(a)">✎ Editar</button>
+            <button type="button" class="btn-table btn-danger" (click)="eliminarAprendiz(a)">⌫ Eliminar</button>
+          </td>
+        </tr>
+        <tr *ngIf="aprendicesFiltradosPorTexto.length === 0">
+          <td colspan="7" style="text-align: center; padding: 28px; color: var(--text-secondary);">
+            No hay aprendices que coincidan con la búsqueda.
           </td>
         </tr>
       </tbody>

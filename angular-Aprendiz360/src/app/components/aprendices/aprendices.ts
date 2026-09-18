@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BackendService } from '../../services/backend.service';
@@ -18,6 +18,8 @@ export class AprendicesComponent implements OnInit {
   paises: string[] = [];
   textoBusqueda: string = '';
   mensajeToast: string | null = null;
+  mensajeError: string | null = null;
+  editingAprendizId?: number;
 
   nuevoAprendiz: Aprendiz = {
     nombre: '',
@@ -30,8 +32,9 @@ export class AprendicesComponent implements OnInit {
 
   constructor(
     private backendService: BackendService,
-    private externalApi: ExternalApiService
-  ) {}
+    private externalApi: ExternalApiService,
+    private changeDetector: ChangeDetectorRef
+  ) { }
 
   ngOnInit(): void {
     this.cargarAprendices();
@@ -40,24 +43,74 @@ export class AprendicesComponent implements OnInit {
   }
 
   cargarAprendices() {
-    this.backendService.getAprendices().subscribe(data => this.aprendices = data);
+    this.backendService.getAprendices().subscribe({
+      next: data => {
+        this.aprendices = data;
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        this.mensajeError = 'No se pudieron cargar los aprendices. Verifica que el backend esté activo.';
+        this.changeDetector.markForCheck();
+      }
+    });
   }
 
   cargarFichas() {
-    this.backendService.getFichas().subscribe(fichas => {
-      this.fichasActivas = fichas.filter(f => f.estado === 'EN_EJECUCION');
+    this.backendService.getFichas().subscribe({
+      next: fichas => {
+        this.fichasActivas = fichas.filter(f => f.estado === 'EN_EJECUCION');
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        this.mensajeError = 'No se pudieron cargar las fichas disponibles.';
+        this.changeDetector.markForCheck();
+      }
     });
   }
 
   cargarPaises() {
-    this.externalApi.getPaises().subscribe(data => {
-      this.paises = data.map((p: any) => p.name.common).sort();
+    this.externalApi.getPaises().subscribe({
+      next: data => {
+        this.paises = data.map((p: any) => p.name.common).sort();
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        this.paises = ['Colombia', 'Ecuador', 'Perú', 'Venezuela', 'México', 'Argentina', 'Chile', 'España'];
+        this.mensajeError = 'La lista internacional no respondió. Se cargó una lista básica de países.';
+        this.changeDetector.markForCheck();
+      }
+    });
+  }
+
+  editarAprendiz(aprendiz: Aprendiz) {
+    this.editingAprendizId = aprendiz.id;
+    this.nuevoAprendiz = { ...aprendiz, ficha: aprendiz.ficha ? { ...aprendiz.ficha } : undefined };
+    this.fichaSeleccionadaId = aprendiz.ficha?.numeroFicha === undefined
+      ? undefined
+      : Number(aprendiz.ficha.numeroFicha);
+  }
+
+  cancelarEdicion() {
+    this.editingAprendizId = undefined;
+    this.fichaSeleccionadaId = undefined;
+    this.nuevoAprendiz = { nombre: '', numeroIdentificacion: '', edad: 18, estado: 'ACTIVO', paisOrigen: '' };
+  }
+
+  eliminarAprendiz(aprendiz: Aprendiz) {
+    if (!aprendiz.id || !confirm('¿Eliminar este aprendiz?')) return;
+    this.backendService.deleteAprendiz(aprendiz.id).subscribe({
+      next: () => {
+        this.mostrarToast('Aprendiz eliminado correctamente');
+        this.cargarAprendices();
+        this.cargarFichas();
+      },
+      error: err => this.mostrarToast('Error al eliminar: ' + (err.error || 'no se pudo eliminar el aprendiz'))
     });
   }
 
   get aprendicesFiltradosPorTexto(): Aprendiz[] {
     if (!this.textoBusqueda.trim()) return this.aprendices;
-    return this.aprendices.filter(a => 
+    return this.aprendices.filter(a =>
       a.nombre.toLowerCase().includes(this.textoBusqueda.toLowerCase()) ||
       a.numeroIdentificacion.includes(this.textoBusqueda)
     );
@@ -69,20 +122,22 @@ export class AprendicesComponent implements OnInit {
   }
 
   guardarAprendiz() {
-    if (this.fichaSeleccionadaId) {
-      this.nuevoAprendiz.ficha = { id: this.fichaSeleccionadaId } as Ficha;
+    if (!this.editingAprendizId && this.fichaSeleccionadaId) {
+      this.nuevoAprendiz.ficha = { numeroFicha: this.fichaSeleccionadaId } as unknown as Ficha;
     }
-    
-    try {
-      this.backendService.createAprendiz(this.nuevoAprendiz).subscribe({
-        next: () => {
-          this.mostrarToast('✅ Aprendiz inscrito con éxito');
-          this.cargarAprendices();
-          this.nuevoAprendiz = { nombre: '', numeroIdentificacion: '', edad: 18, estado: 'ACTIVO', paisOrigen: '' };
-        }
-      });
-    } catch (error: any) {
-      this.mostrarToast('⚠️ Error: ' + error.message);
-    }
+
+    const request = this.editingAprendizId
+      ? this.backendService.updateAprendiz(this.editingAprendizId, this.nuevoAprendiz)
+      : this.backendService.createAprendiz(this.nuevoAprendiz);
+
+    request.subscribe({
+      next: () => {
+        this.mostrarToast(this.editingAprendizId ? 'Aprendiz actualizado con éxito' : 'Aprendiz inscrito con éxito');
+        this.cargarAprendices();
+        this.cargarFichas();
+        this.cancelarEdicion();
+      },
+      error: err => this.mostrarToast('Error: ' + (err.error || 'no se pudo registrar el aprendiz'))
+    });
   }
 }

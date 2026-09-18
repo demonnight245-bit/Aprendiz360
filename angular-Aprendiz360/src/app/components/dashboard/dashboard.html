@@ -1,5 +1,7 @@
 <h1 class="page-title">Dashboard Informativo</h1>
 
+<p *ngIf="mensajeError" style="color: #b42318; margin-bottom: 16px;">{{ mensajeError }}</p>
+
 <div class="metrics-grid">
   <div class="metric-card" routerLink="/aprendices">
     <div class="metric-info">
@@ -27,6 +29,33 @@
       </svg>
     </div>
   </div>
+
+  <div class="metric-card" routerLink="/aprendices">
+    <div class="metric-info">
+      <h3>Aprendices activos</h3>
+      <p>{{ aprendicesActivos }}</p>
+    </div>
+    <div class="metric-icon">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 21a8 8 0 0 1 16 0"></path>
+      </svg>
+    </div>
+  </div>
+
+  <div class="metric-card" routerLink="/fichas">
+    <div class="metric-info">
+      <h3>Fichas en ejecución</h3>
+      <p>{{ fichasEnEjecucion }}</p>
+    </div>
+    <div class="metric-icon">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M5 12h14"></path>
+        <path d="M12 5v14"></path>
+        <circle cx="12" cy="12" r="9"></circle>
+      </svg>
+    </div>
+  </div>
 </div>
 
 <div class="card">
@@ -38,7 +67,7 @@
     <label>Selecciona una Ficha de Formación:</label>
     <select [(ngModel)]="fichaSeleccionadaId" (change)="buscarPorFicha()">
       <option [ngValue]="undefined">-- Seleccionar Ficha --</option>
-      <option *ngFor="let f of fichas" [value]="f.id">
+      <option *ngFor="let f of fichas" [ngValue]="f.numeroFicha">
         Ficha {{ f.numeroFicha }} - {{ f.programa }}
       </option>
     </select>
@@ -62,7 +91,8 @@
           <td>{{ a.edad }} años</td>
           <td>{{ a.paisOrigen || 'N/A' }}</td>
           <td>
-            <span style="background-color: #E6F4EA; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.8rem;">
+            <span
+              style="background-color: #E6F4EA; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.8rem;">
               {{ a.estado }}
             </span>
           </td>
@@ -71,7 +101,8 @@
     </table>
   </div>
 
-  <p *ngIf="fichaSeleccionadaId && aprendicesFiltrados.length === 0" style="margin-top: 15px; color: var(--text-secondary); text-align: center; padding: 20px 0;">
+  <p *ngIf="fichaSeleccionadaId && aprendicesFiltrados.length === 0"
+    style="margin-top: 15px; color: var(--text-secondary); text-align: center; padding: 20px 0;">
     No hay aprendices inscritos en esta ficha actualmente.
   </p>
 </div>
