@@ -1,0 +1,105 @@
+<h1 class="page-title">Gestión de Fichas y Horarios</h1>
+
+<div class="card">
+  <div class="card-header">
+    <h2>Crear Nuevo Horario</h2>
+  </div>
+  <form (ngSubmit)="guardarHorario()">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+      <div class="form-group">
+        <label>Días de Jornada:</label>
+        <input type="text" [(ngModel)]="nuevoHorario.dias" name="dias" placeholder="Ej: LUNES_A_VIERNES" required>
+      </div>
+      <div class="form-group">
+        <label>Hora Entrada:</label>
+        <input type="time" [(ngModel)]="nuevoHorario.horaEntrada" name="horaEntrada" required>
+      </div>
+      <div class="form-group">
+        <label>Hora Salida:</label>
+        <input type="time" [(ngModel)]="nuevoHorario.horaSalida" name="horaSalida" required>
+      </div>
+    </div>
+    <button type="submit" class="btn-sena" style="margin-top: 10px;">
+      ➕ Guardar Horario
+    </button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>Crear Nueva Ficha</h2>
+  </div>
+  <form (ngSubmit)="guardarFicha()">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+      <div class="form-group">
+        <label>Número de Ficha:</label>
+        <input type="text" [(ngModel)]="nuevaFicha.numeroFicha" name="numeroFicha" placeholder="Ej: 2670123" required>
+      </div>
+      <div class="form-group">
+        <label>Programa de Formación:</label>
+        <input type="text" [(ngModel)]="nuevaFicha.programa" name="programa" placeholder="Ej: ADSO" required>
+      </div>
+      <div class="form-group">
+        <label>Cupos Disponibles:</label>
+        <input type="number" [(ngModel)]="nuevaFicha.cuposDisponibles" name="cuposDisponibles" required>
+      </div>
+      <div class="form-group">
+        <label>Horario Asignado:</label>
+        <select [(ngModel)]="horarioSeleccionadoId" name="horario" required>
+          <option [ngValue]="undefined">-- Seleccionar Horario --</option>
+          <option *ngFor="let h of horarios" [value]="h.id">
+            {{ h.dias }} ({{ h.horaEntrada }} - {{ h.horaSalida }})
+          </option>
+        </select>
+      </div>
+    </div>
+    <button type="submit" class="btn-sena" style="margin-top: 10px;">
+      ➕ Guardar Ficha
+    </button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>Fichas Registradas</h2>
+  </div>
+  <div class="table-container">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>N° Ficha</th>
+          <th>Programa</th>
+          <th>Ocupación de Cupos</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let f of fichas">
+          <td><b>{{ f.numeroFicha }}</b></td>
+          <td>{{ f.programa }}</td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <progress 
+                [value]="f.numeroAprendicesInscritos" 
+                [max]="f.cuposDisponibles"
+                style="width: 120px; height: 10px; border-radius: 5px; accent-color: var(--sena-green);"
+              ></progress>
+              <small style="font-weight: 600; color: var(--text-secondary);">
+                <b>{{ f.numeroAprendicesInscritos }}</b> / {{ f.cuposDisponibles }}
+              </small>
+            </div>
+          </td>
+          <td>
+            <span 
+              [style.background-color]="f.estado === 'EN_EJECUCION' ? '#E6F4EA' : '#FEF7E0'"
+              [style.color]="f.estado === 'EN_EJECUCION' ? '#137333' : '#B06000'"
+              style="padding: 4px 12px; border-radius: 12px; font-weight: 700; font-size: 0.8rem;"
+            >
+              {{ f.estado === 'EN_EJECUCION' ? '🟢 En Ejecución' : '🟡 Finalizado' }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
