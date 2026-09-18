@@ -1,5 +1,7 @@
 <h1 class="page-title">Gestión de Fichas y Horarios</h1>
 
+<p *ngIf="mensajeError" style="color: #b42318; margin-bottom: 16px;">{{ mensajeError }}</p>
+
 <div class="card">
   <div class="card-header">
     <h2>Crear Nuevo Horario</h2>
@@ -47,7 +49,7 @@
         <label>Horario Asignado:</label>
         <select [(ngModel)]="horarioSeleccionadoId" name="horario" required>
           <option [ngValue]="undefined">-- Seleccionar Horario --</option>
-          <option *ngFor="let h of horarios" [value]="h.id">
+          <option *ngFor="let h of horarios" [value]="h.idHorario">
             {{ h.dias }} ({{ h.horaEntrada }} - {{ h.horaSalida }})
           </option>
         </select>
@@ -79,22 +81,17 @@
           <td>{{ f.programa }}</td>
           <td>
             <div style="display: flex; align-items: center; gap: 12px;">
-              <progress 
-                [value]="f.numeroAprendicesInscritos" 
-                [max]="f.cuposDisponibles"
-                style="width: 120px; height: 10px; border-radius: 5px; accent-color: var(--sena-green);"
-              ></progress>
+              <progress [value]="f.numeroAprendicesInscritos" [max]="f.cuposDisponibles"
+                style="width: 120px; height: 10px; border-radius: 5px; accent-color: var(--sena-green);"></progress>
               <small style="font-weight: 600; color: var(--text-secondary);">
                 <b>{{ f.numeroAprendicesInscritos }}</b> / {{ f.cuposDisponibles }}
               </small>
             </div>
           </td>
           <td>
-            <span 
-              [style.background-color]="f.estado === 'EN_EJECUCION' ? '#E6F4EA' : '#FEF7E0'"
+            <span [style.background-color]="f.estado === 'EN_EJECUCION' ? '#E6F4EA' : '#FEF7E0'"
               [style.color]="f.estado === 'EN_EJECUCION' ? '#137333' : '#B06000'"
-              style="padding: 4px 12px; border-radius: 12px; font-weight: 700; font-size: 0.8rem;"
-            >
+              style="padding: 4px 12px; border-radius: 12px; font-weight: 700; font-size: 0.8rem;">
               {{ f.estado === 'EN_EJECUCION' ? '🟢 En Ejecución' : '🟡 Finalizado' }}
             </span>
           </td>

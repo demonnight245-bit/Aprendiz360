@@ -1,5 +1,7 @@
 <h1 class="page-title">Inscripción y Control de Aprendices</h1>
 
+<p *ngIf="mensajeError" style="color: #b42318; margin-bottom: 16px;">{{ mensajeError }}</p>
+
 <div class="card">
   <div class="card-header">
     <h2>Registrar Nuevo Aprendiz</h2>
@@ -12,7 +14,8 @@
       </div>
       <div class="form-group">
         <label>Número de Identificación:</label>
-        <input type="text" [(ngModel)]="nuevoAprendiz.numeroIdentificacion" name="numeroIdentificacion" placeholder="Ej: 1012345678" required>
+        <input type="text" [(ngModel)]="nuevoAprendiz.numeroIdentificacion" name="numeroIdentificacion"
+          placeholder="Ej: 1012345678" required>
       </div>
       <div class="form-group">
         <label>Edad:</label>
@@ -29,8 +32,9 @@
         <label>Ficha de Formación Activa:</label>
         <select [(ngModel)]="fichaSeleccionadaId" name="ficha" required>
           <option [ngValue]="undefined">-- Seleccionar Ficha --</option>
-          <option *ngFor="let f of fichasActivas" [value]="f.id">
-            Ficha {{ f.numeroFicha }} - {{ f.programa }} (Cupos disponibles: {{ f.cuposDisponibles - f.numeroAprendicesInscritos }})
+          <option *ngFor="let f of fichasActivas" [ngValue]="f.numeroFicha">
+            Ficha {{ f.numeroFicha }} - {{ f.programa }} (Cupos disponibles: {{ f.cuposDisponibles -
+            f.numeroAprendicesInscritos }})
           </option>
         </select>
       </div>
@@ -42,16 +46,14 @@
 </div>
 
 <div class="card">
-  <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: none; margin-bottom: 0;">
+  <div class="card-header"
+    style="display: flex; justify-content: space-between; align-items: center; border-bottom: none; margin-bottom: 0;">
     <h2>Directorio General de Aprendices</h2>
   </div>
 
   <div class="form-group" style="margin-bottom: 20px;">
-    <input 
-      type="text" 
-      [(ngModel)]="textoBusqueda" 
-      placeholder="🔍 Buscar aprendiz por nombre o número de identificación..." 
-    />
+    <input type="text" [(ngModel)]="textoBusqueda"
+      placeholder="🔍 Buscar aprendiz por nombre o número de identificación..." />
   </div>
 
   <div class="table-container">
@@ -73,12 +75,14 @@
           <td>{{ a.edad }} años</td>
           <td>{{ a.paisOrigen || 'N/A' }}</td>
           <td>
-            <span style="background-color: #F1F5F9; color: var(--sena-dark); padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;">
+            <span
+              style="background-color: #F1F5F9; color: var(--sena-dark); padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;">
               {{ a.ficha?.numeroFicha || 'Sin Ficha' }}
             </span>
           </td>
           <td>
-            <span style="background-color: #E6F4EA; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.8rem;">
+            <span
+              style="background-color: #E6F4EA; color: #137333; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.8rem;">
               {{ a.estado }}
             </span>
           </td>

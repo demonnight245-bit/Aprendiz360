@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BackendService } from '../../services/backend.service';
@@ -14,6 +14,7 @@ import { Horario } from '../../models/horario.model';
 export class FichasComponent implements OnInit {
   fichas: Ficha[] = [];
   horarios: Horario[] = [];
+  mensajeError: string | null = null;
 
   // Formulario Ficha
   nuevaFicha: Ficha = {
@@ -32,7 +33,10 @@ export class FichasComponent implements OnInit {
     horaSalida: '13:00'
   };
 
-  constructor(private backendService: BackendService) {}
+  constructor(
+    private backendService: BackendService,
+    private changeDetector: ChangeDetectorRef
+  ) { }
 
   ngOnInit(): void {
     this.cargarFichas();
@@ -40,15 +44,31 @@ export class FichasComponent implements OnInit {
   }
 
   cargarFichas() {
-    this.backendService.getFichas().subscribe(data => this.fichas = data);
+    this.backendService.getFichas().subscribe({
+      next: data => {
+        this.fichas = data;
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        this.mensajeError = 'No se pudieron cargar las fichas. Verifica que el backend esté activo.';
+        this.changeDetector.markForCheck();
+      }
+    });
   }
 
   cargarHorarios() {
-    this.backendService.getHorarios().subscribe(data => this.horarios = data);
+    this.backendService.getHorarios().subscribe(data => {
+      this.horarios = data;
+      this.changeDetector.markForCheck();
+    });
   }
 
   guardarHorario() {
-    this.backendService.createHorario(this.nuevoHorario).subscribe({
+    const dias = typeof this.nuevoHorario.dias === 'string'
+      ? this.nuevoHorario.dias.split('_A_').flatMap(dia => dia.split(',')).map(dia => dia.trim().toUpperCase()).filter(Boolean)
+      : this.nuevoHorario.dias;
+
+    this.backendService.createHorario({ ...this.nuevoHorario, dias }).subscribe({
       next: () => {
         alert('Horario creado correctamente');
         this.cargarHorarios();
@@ -59,14 +79,14 @@ export class FichasComponent implements OnInit {
 
   guardarFicha() {
     if (this.horarioSeleccionadoId) {
-      this.nuevaFicha.horario = { id: this.horarioSeleccionadoId } as Horario;
+      this.nuevaFicha.horario = { idHorario: this.horarioSeleccionadoId } as Horario;
     }
     this.backendService.createFicha(this.nuevaFicha).subscribe({
       next: () => {
         alert('Ficha registrada con éxito');
         this.cargarFichas();
       },
-      error: err => alert('Error al registrar la ficha')
+      error: err => alert('Error al registrar la ficha: ' + (err.error || 'verifica los datos y el horario'))
     });
   }
 }

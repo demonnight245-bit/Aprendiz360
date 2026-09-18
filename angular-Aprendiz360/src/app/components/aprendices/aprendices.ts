@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BackendService } from '../../services/backend.service';
@@ -18,6 +18,7 @@ export class AprendicesComponent implements OnInit {
   paises: string[] = [];
   textoBusqueda: string = '';
   mensajeToast: string | null = null;
+  mensajeError: string | null = null;
 
   nuevoAprendiz: Aprendiz = {
     nombre: '',
@@ -30,8 +31,9 @@ export class AprendicesComponent implements OnInit {
 
   constructor(
     private backendService: BackendService,
-    private externalApi: ExternalApiService
-  ) {}
+    private externalApi: ExternalApiService,
+    private changeDetector: ChangeDetectorRef
+  ) { }
 
   ngOnInit(): void {
     this.cargarAprendices();
@@ -40,24 +42,41 @@ export class AprendicesComponent implements OnInit {
   }
 
   cargarAprendices() {
-    this.backendService.getAprendices().subscribe(data => this.aprendices = data);
+    this.backendService.getAprendices().subscribe({
+      next: data => {
+        this.aprendices = data;
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        this.mensajeError = 'No se pudieron cargar los aprendices. Verifica que el backend esté activo.';
+        this.changeDetector.markForCheck();
+      }
+    });
   }
 
   cargarFichas() {
-    this.backendService.getFichas().subscribe(fichas => {
-      this.fichasActivas = fichas.filter(f => f.estado === 'EN_EJECUCION');
+    this.backendService.getFichas().subscribe({
+      next: fichas => {
+        this.fichasActivas = fichas.filter(f => f.estado === 'EN_EJECUCION');
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        this.mensajeError = 'No se pudieron cargar las fichas disponibles.';
+        this.changeDetector.markForCheck();
+      }
     });
   }
 
   cargarPaises() {
     this.externalApi.getPaises().subscribe(data => {
       this.paises = data.map((p: any) => p.name.common).sort();
+      this.changeDetector.markForCheck();
     });
   }
 
   get aprendicesFiltradosPorTexto(): Aprendiz[] {
     if (!this.textoBusqueda.trim()) return this.aprendices;
-    return this.aprendices.filter(a => 
+    return this.aprendices.filter(a =>
       a.nombre.toLowerCase().includes(this.textoBusqueda.toLowerCase()) ||
       a.numeroIdentificacion.includes(this.textoBusqueda)
     );
@@ -70,19 +89,18 @@ export class AprendicesComponent implements OnInit {
 
   guardarAprendiz() {
     if (this.fichaSeleccionadaId) {
-      this.nuevoAprendiz.ficha = { id: this.fichaSeleccionadaId } as Ficha;
+      this.nuevoAprendiz.ficha = { numeroFicha: this.fichaSeleccionadaId } as unknown as Ficha;
     }
-    
-    try {
-      this.backendService.createAprendiz(this.nuevoAprendiz).subscribe({
-        next: () => {
-          this.mostrarToast('✅ Aprendiz inscrito con éxito');
-          this.cargarAprendices();
-          this.nuevoAprendiz = { nombre: '', numeroIdentificacion: '', edad: 18, estado: 'ACTIVO', paisOrigen: '' };
-        }
-      });
-    } catch (error: any) {
-      this.mostrarToast('⚠️ Error: ' + error.message);
-    }
+
+    this.backendService.createAprendiz(this.nuevoAprendiz).subscribe({
+      next: () => {
+        this.mostrarToast('Aprendiz inscrito con éxito');
+        this.cargarAprendices();
+        this.cargarFichas();
+        this.nuevoAprendiz = { nombre: '', numeroIdentificacion: '', edad: 18, estado: 'ACTIVO', paisOrigen: '' };
+        this.fichaSeleccionadaId = undefined;
+      },
+      error: err => this.mostrarToast('Error: ' + (err.error || 'no se pudo registrar el aprendiz'))
+    });
   }
 }
