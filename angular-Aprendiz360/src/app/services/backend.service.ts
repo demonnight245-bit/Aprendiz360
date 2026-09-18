@@ -20,6 +20,12 @@ export class BackendService {
   createHorario(horario: Horario): Observable<Horario> {
     return this.http.post<Horario>(`${this.apiUrl}/horarios`, horario);
   }
+  updateHorario(id: number, horario: Horario): Observable<Horario> {
+    return this.http.put<Horario>(`${this.apiUrl}/horarios/${id}`, horario);
+  }
+  deleteHorario(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/horarios/${id}`);
+  }
 
   // --- FICHAS ---
   getFichas(): Observable<Ficha[]> {
@@ -27,6 +33,12 @@ export class BackendService {
   }
   createFicha(ficha: Ficha): Observable<Ficha> {
     return this.http.post<Ficha>(`${this.apiUrl}/fichas`, ficha);
+  }
+  updateFicha(numeroFicha: number | string, ficha: Ficha): Observable<Ficha> {
+    return this.http.put<Ficha>(`${this.apiUrl}/fichas/${numeroFicha}`, ficha);
+  }
+  deleteFicha(numeroFicha: number | string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/fichas/${numeroFicha}`);
   }
 
   // --- APRENDICES ---
@@ -38,6 +50,12 @@ export class BackendService {
   }
   createAprendiz(aprendiz: Aprendiz): Observable<Aprendiz> {
     return this.http.post<Aprendiz>(`${this.apiUrl}/aprendices`, aprendiz);
+  }
+  updateAprendiz(id: number, aprendiz: Aprendiz): Observable<Aprendiz> {
+    return this.http.put<Aprendiz>(`${this.apiUrl}/aprendices/${id}`, aprendiz);
+  }
+  deleteAprendiz(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/aprendices/${id}`);
   }
 
   // --- DASHBOARD / METRICAS ---

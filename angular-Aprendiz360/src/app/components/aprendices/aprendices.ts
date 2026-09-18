@@ -19,6 +19,7 @@ export class AprendicesComponent implements OnInit {
   textoBusqueda: string = '';
   mensajeToast: string | null = null;
   mensajeError: string | null = null;
+  editingAprendizId?: number;
 
   nuevoAprendiz: Aprendiz = {
     nombre: '',
@@ -68,9 +69,42 @@ export class AprendicesComponent implements OnInit {
   }
 
   cargarPaises() {
-    this.externalApi.getPaises().subscribe(data => {
-      this.paises = data.map((p: any) => p.name.common).sort();
-      this.changeDetector.markForCheck();
+    this.externalApi.getPaises().subscribe({
+      next: data => {
+        this.paises = data.map((p: any) => p.name.common).sort();
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        this.paises = ['Colombia', 'Ecuador', 'Perú', 'Venezuela', 'México', 'Argentina', 'Chile', 'España'];
+        this.mensajeError = 'La lista internacional no respondió. Se cargó una lista básica de países.';
+        this.changeDetector.markForCheck();
+      }
+    });
+  }
+
+  editarAprendiz(aprendiz: Aprendiz) {
+    this.editingAprendizId = aprendiz.id;
+    this.nuevoAprendiz = { ...aprendiz, ficha: aprendiz.ficha ? { ...aprendiz.ficha } : undefined };
+    this.fichaSeleccionadaId = aprendiz.ficha?.numeroFicha === undefined
+      ? undefined
+      : Number(aprendiz.ficha.numeroFicha);
+  }
+
+  cancelarEdicion() {
+    this.editingAprendizId = undefined;
+    this.fichaSeleccionadaId = undefined;
+    this.nuevoAprendiz = { nombre: '', numeroIdentificacion: '', edad: 18, estado: 'ACTIVO', paisOrigen: '' };
+  }
+
+  eliminarAprendiz(aprendiz: Aprendiz) {
+    if (!aprendiz.id || !confirm('¿Eliminar este aprendiz?')) return;
+    this.backendService.deleteAprendiz(aprendiz.id).subscribe({
+      next: () => {
+        this.mostrarToast('Aprendiz eliminado correctamente');
+        this.cargarAprendices();
+        this.cargarFichas();
+      },
+      error: err => this.mostrarToast('Error al eliminar: ' + (err.error || 'no se pudo eliminar el aprendiz'))
     });
   }
 
@@ -88,17 +122,20 @@ export class AprendicesComponent implements OnInit {
   }
 
   guardarAprendiz() {
-    if (this.fichaSeleccionadaId) {
+    if (!this.editingAprendizId && this.fichaSeleccionadaId) {
       this.nuevoAprendiz.ficha = { numeroFicha: this.fichaSeleccionadaId } as unknown as Ficha;
     }
 
-    this.backendService.createAprendiz(this.nuevoAprendiz).subscribe({
+    const request = this.editingAprendizId
+      ? this.backendService.updateAprendiz(this.editingAprendizId, this.nuevoAprendiz)
+      : this.backendService.createAprendiz(this.nuevoAprendiz);
+
+    request.subscribe({
       next: () => {
-        this.mostrarToast('Aprendiz inscrito con éxito');
+        this.mostrarToast(this.editingAprendizId ? 'Aprendiz actualizado con éxito' : 'Aprendiz inscrito con éxito');
         this.cargarAprendices();
         this.cargarFichas();
-        this.nuevoAprendiz = { nombre: '', numeroIdentificacion: '', edad: 18, estado: 'ACTIVO', paisOrigen: '' };
-        this.fichaSeleccionadaId = undefined;
+        this.cancelarEdicion();
       },
       error: err => this.mostrarToast('Error: ' + (err.error || 'no se pudo registrar el aprendiz'))
     });

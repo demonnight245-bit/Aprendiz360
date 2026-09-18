@@ -4,13 +4,16 @@
 
 <div class="card">
   <div class="card-header">
-    <h2>Crear Nuevo Horario</h2>
+    <h2>{{ editingHorarioId ? 'Editar Horario' : 'Crear Nuevo Horario' }}</h2>
   </div>
   <form (ngSubmit)="guardarHorario()">
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
       <div class="form-group">
         <label>Días de Jornada:</label>
-        <input type="text" [(ngModel)]="nuevoHorario.dias" name="dias" placeholder="Ej: LUNES_A_VIERNES" required>
+        <select [(ngModel)]="nuevoHorario.dias" name="dias" multiple required>
+          <option *ngFor="let dia of diasDisponibles" [ngValue]="dia">{{ dia }}</option>
+        </select>
+        <small class="field-hint">Puedes seleccionar uno o varios días.</small>
       </div>
       <div class="form-group">
         <label>Hora Entrada:</label>
@@ -22,24 +25,35 @@
       </div>
     </div>
     <button type="submit" class="btn-sena" style="margin-top: 10px;">
-      ➕ Guardar Horario
+      {{ editingHorarioId ? '💾 Actualizar Horario' : '➕ Guardar Horario' }}
     </button>
+    <button *ngIf="editingHorarioId" type="button" class="btn-secondary"
+      (click)="cancelarEdicionHorario()">Cancelar</button>
   </form>
 </div>
 
 <div class="card">
   <div class="card-header">
-    <h2>Crear Nueva Ficha</h2>
+    <h2>{{ editingFichaNumero ? 'Editar Ficha' : 'Crear Nueva Ficha' }}</h2>
   </div>
   <form (ngSubmit)="guardarFicha()">
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
       <div class="form-group">
         <label>Número de Ficha:</label>
-        <input type="text" [(ngModel)]="nuevaFicha.numeroFicha" name="numeroFicha" placeholder="Ej: 2670123" required>
+        <input type="text" [(ngModel)]="nuevaFicha.numeroFicha" name="numeroFicha" placeholder="Ej: 2670123" required
+          [disabled]="!!editingFichaNumero">
       </div>
       <div class="form-group">
         <label>Programa de Formación:</label>
         <input type="text" [(ngModel)]="nuevaFicha.programa" name="programa" placeholder="Ej: ADSO" required>
+      </div>
+      <div class="form-group">
+        <label>Tipo de Formación:</label>
+        <select [(ngModel)]="nuevaFicha.tipoFormacion" name="tipoFormacion" required>
+          <option value="TECNICO">Técnico</option>
+          <option value="TECNOLOGO">Tecnólogo</option>
+          <option value="CURSO">Curso</option>
+        </select>
       </div>
       <div class="form-group">
         <label>Cupos Disponibles:</label>
@@ -49,16 +63,59 @@
         <label>Horario Asignado:</label>
         <select [(ngModel)]="horarioSeleccionadoId" name="horario" required>
           <option [ngValue]="undefined">-- Seleccionar Horario --</option>
-          <option *ngFor="let h of horarios" [value]="h.idHorario">
+          <option *ngFor="let h of horarios" [ngValue]="h.idHorario">
             {{ h.dias }} ({{ h.horaEntrada }} - {{ h.horaSalida }})
           </option>
         </select>
       </div>
+      <div class="form-group">
+        <label>Estado:</label>
+        <select [(ngModel)]="nuevaFicha.estado" name="estadoFicha" required>
+          <option value="EN_EJECUCION">En ejecución</option>
+          <option value="FINALIZADO">Finalizado</option>
+        </select>
+      </div>
     </div>
     <button type="submit" class="btn-sena" style="margin-top: 10px;">
-      ➕ Guardar Ficha
+      {{ editingFichaNumero ? '💾 Actualizar Ficha' : '➕ Guardar Ficha' }}
     </button>
+    <button *ngIf="editingFichaNumero" type="button" class="btn-secondary"
+      (click)="cancelarEdicionFicha()">Cancelar</button>
   </form>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2>Horarios disponibles</h2>
+  </div>
+  <div class="table-container">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Días</th>
+          <th>Entrada</th>
+          <th>Salida</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let h of horarios">
+          <td>{{ h.dias.join(', ') }}</td>
+          <td>{{ h.horaEntrada }}</td>
+          <td>{{ h.horaSalida }}</td>
+          <td>
+            <button type="button" class="btn-table" (click)="editarHorario(h)">✎ Editar</button>
+            <button type="button" class="btn-table btn-danger" (click)="eliminarHorario(h)">⌫ Eliminar</button>
+          </td>
+        </tr>
+        <tr *ngIf="horarios.length === 0">
+          <td colspan="4" style="text-align: center; padding: 28px; color: var(--text-secondary);">
+            Aún no hay horarios registrados.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <div class="card">
@@ -71,14 +128,17 @@
         <tr>
           <th>N° Ficha</th>
           <th>Programa</th>
+          <th>Tipo</th>
           <th>Ocupación de Cupos</th>
           <th>Estado</th>
+          <th>Acción</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let f of fichas">
           <td><b>{{ f.numeroFicha }}</b></td>
           <td>{{ f.programa }}</td>
+          <td>{{ f.tipoFormacion }}</td>
           <td>
             <div style="display: flex; align-items: center; gap: 12px;">
               <progress [value]="f.numeroAprendicesInscritos" [max]="f.cuposDisponibles"
@@ -94,6 +154,15 @@
               style="padding: 4px 12px; border-radius: 12px; font-weight: 700; font-size: 0.8rem;">
               {{ f.estado === 'EN_EJECUCION' ? '🟢 En Ejecución' : '🟡 Finalizado' }}
             </span>
+          </td>
+          <td>
+            <button type="button" class="btn-table" (click)="editarFicha(f)">✎ Editar</button>
+            <button type="button" class="btn-table btn-danger" (click)="eliminarFicha(f)">⌫ Eliminar</button>
+          </td>
+        </tr>
+        <tr *ngIf="fichas.length === 0">
+          <td colspan="6" style="text-align: center; padding: 28px; color: var(--text-secondary);">
+            Aún no hay fichas registradas.
           </td>
         </tr>
       </tbody>
